@@ -115,7 +115,7 @@ footer{text-align:center;color:#687c86;font-size:12px;padding:20px 18px 30px}
    <p class="example-label">学生看到的题目：</p>
    <div class="example-answer">小明每天<span class="missing">＿＿＿＿</span>地完成作业。</div>
    <div class="example-options" aria-label="学生可选词语"><span class="example-option">认真</span><span class="example-option">马虎</span><span class="example-option">高兴</span><span class="example-option">安静</span></div>
-   <button type="button" class="btn outline" id="loadSample">✨ 载入这个示例，马上试用</button>
+   <button type="button" class="btn outline" id="loadSample">✨ 试玩示例（直接进入学生练习）</button>
   </div>
   <div class="field"><label class="field-label" for="activityTitle">活动名称（可选）</label><input id="activityTitle" type="text" maxlength="80" value="选词填空" placeholder="例如：第三课词语练习"></div>
   <div id="sentenceRows"></div>
@@ -466,10 +466,9 @@ $('distractorMic').onclick=()=>toggleMic($('distractorRow'),$('distractors'),$('
 
 function loadSample(){
   const example='小明每天认真地完成作业。';
-  const currentLines=getRows();
-  const hasExisting=currentLines.length>0||$('distractors').value.trim()!==''||
+  const hasExisting=getRows().length>0 || $('distractors').value.trim()!=='' ||
     ($('activityTitle').value.trim()!==''&&$('activityTitle').value.trim()!=='选词填空');
-  if(hasExisting&&!confirm('载入示例会替换当前输入的句子、干扰词和挖空选择。确定继续吗？'))return;
+  if(hasExisting&&!window.confirm('试玩示例将替换当前输入的句子和干扰词。确定继续吗？'))return;
   if(activeRec){
     endMic(true);
     if(activeMic){
@@ -479,18 +478,31 @@ function loadSample(){
     }
     activeRec=null;activeMic=null;activeRow=null;
   }
-  const q=createQuestion(example);
-  const target=q.parts.find(p=>p.text==='认真');
-  if(!target){alert('自动分词无法识别示例词语，请手动设置挖空。');return}
-  q.parts.forEach(p=>p.blank=p===target);
+  // The example is pre-segmented because browser dictionaries may group “认真地” differently.
+  // Pre-select the intended answer so the sample works independently of Intl.Segmenter.
+  const sampleParts=[
+    {text:'小明',blank:false},
+    {text:'每天',blank:false},
+    {text:'认真',blank:true},
+    {text:'地',blank:false},
+    {text:'完成',blank:false},
+    {text:'作业',blank:false}
+  ];
+  const q=createQuestion(example,sampleParts);
+  if(!q.parts.some(p=>p.blank&&p.text==='认真')){
+    alert('示例无法正常载入，请刷新页面后重试。');
+    return;
+  }
   questions=[q];
   $('sentenceRows').replaceChildren();
   addRow(example);
   $('distractors').value='高兴、安静、马虎';
   $('activityTitle').value='选词填空';
-  setJsonStatus('示例已载入！点击“下一步：选择挖空”检查已选中的“认真”，然后生成学生练习。');
+  setJsonStatus('示例已载入。教师可随时返回设置并修改。');
+  feedback('','');
+  // A “try now” button should actually start the ready-made pupil exercise.
+  start();
 }
-
 $('loadSample').onclick=loadSample;
 $('addSentence').onclick=()=>addRow();
 $('prepare').onclick=prepare;
