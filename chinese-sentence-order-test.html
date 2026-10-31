@@ -42,7 +42,7 @@ function toggleSpeech(row,input,button){
   }
   const initialText=input.value;
   let finalText='',errorMessage='';
-  const joined=spoken=>initialText+(initialText&&spoken&&!/[\s，。！？,.!?]$/.test(initialText)?' ':'')+spoken;
+  const joined=spoken=>initialText+(initialText&&spoken&&/[A-Za-z0-9]$/.test(initialText)&&/^[A-Za-z0-9]/.test(spoken)?' ':'')+spoken;
   recognition.onstart=()=>{if(activeRecognition===recognition)setSpeechStatus(row,'🔴 正在聆听… 请说出完整句子。')};
   recognition.onresult=event=>{
     if(activeRecognition!==recognition||!row.isConnected)return;
