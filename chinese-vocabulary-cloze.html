@@ -48,6 +48,16 @@ textarea{resize:vertical;min-height:75px}
 .distractor-input textarea{flex:1 1 380px;min-width:0}
 .distractor-input .mic{flex-shrink:0}
 .distractor-input .speech-status{padding-left:0}
+.example-box{background:#f7fbfa;border:1px solid #c9e5db;border-radius:15px;padding:16px 18px;margin:18px 0}
+.example-box h2{font-size:19px;margin:0 0 12px;color:#136958}
+.example-line{margin:8px 0;font-size:15px;line-height:1.65}
+.example-line b{display:inline-block;min-width:105px;color:#355a65}
+.example-line .sample{font-weight:700;color:#163f46}
+.example-answer{background:#fff;border:1px dashed #a6cbbf;border-radius:10px;padding:12px 14px;font-size:clamp(19px,2.6vw,24px);line-height:1.6;margin:11px 0 8px;overflow-wrap:anywhere}
+.example-answer .missing{border-bottom:3px solid #218b76;color:#127560;padding:0 6px}
+.example-options{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.example-option{background:#fff;border:1px solid #aad3c7;border-radius:8px;padding:7px 10px;font-size:15px;font-weight:700;color:#1b6254}
+.example-label{font-size:13px;color:#4a7280;margin:7px 0}
 .note{background:#f2f8f7;border-left:3px solid #64ae9c;padding:12px 15px;border-radius:0 12px 12px 0;color:#3d6470;line-height:1.6;font-size:14px;margin:16px 0}
 .json-message{font-size:13px;color:var(--muted);margin:12px 0 0}
 .json-message.bad{color:#ac372e}
@@ -96,18 +106,28 @@ footer{text-align:center;color:#687c86;font-size:12px;padding:20px 18px 30px}
  <nav class="steps" aria-label="活动步骤"><span class="step active" id="step1">1 · 输入句子</span><span class="step" id="step2">2 · 选择挖空</span><span class="step" id="step3">3 · 学生练习</span></nav>
  <section class="panel" id="setup">
   <h1>教师设置</h1>
-  <p class="hint">输入正确的句子，系统自动分词，并推荐一个挖空位置。你可以自由调整，也可以用 🎤 普通话语音输入。</p>
+  <p class="hint">先输入完整的<strong>正确句子</strong>（不要自己挖空）。下一步再选择要隐藏的词语。干扰词是供学生选择的其他答案，不需要再输入正确词语。</p>
+  <div class="example-box" aria-label="完整填写示例">
+   <h2>💡 填写示例 · 看看老师需要输入什么</h2>
+   <p class="example-line"><b>① 正确句子：</b><span class="sample">小明每天认真地完成作业。</span></p>
+   <p class="example-line"><b>② 干扰词：</b><span class="sample">高兴、安静、马虎</span><span class="hint">（不用填“认真”）</span></p>
+   <p class="example-line"><b>③ 下一步：</b>点击词语 <strong>“认真”</strong>，将它设为挖空词。</p>
+   <p class="example-label">学生看到的题目：</p>
+   <div class="example-answer">小明每天<span class="missing">＿＿＿＿</span>地完成作业。</div>
+   <div class="example-options" aria-label="学生可选词语"><span class="example-option">认真</span><span class="example-option">马虎</span><span class="example-option">高兴</span><span class="example-option">安静</span></div>
+   <button type="button" class="btn outline" id="loadSample">✨ 载入这个示例，马上试用</button>
+  </div>
   <div class="field"><label class="field-label" for="activityTitle">活动名称（可选）</label><input id="activityTitle" type="text" maxlength="80" value="选词填空" placeholder="例如：第三课词语练习"></div>
   <div id="sentenceRows"></div>
   <div class="toolbar"><button type="button" class="btn secondary" id="addSentence">＋ 添加句子</button></div>
   <div class="field">
    <label class="field-label" for="distractors">干扰词（可选）</label>
    <div id="distractorRow" class="distractor-input">
-    <textarea id="distractors" rows="2" placeholder="例如：高兴、安静、马上（用逗号或换行分隔）"></textarea>
+    <textarea id="distractors" rows="2" placeholder="例如：高兴、安静、马虎（不用输入正确词语“认真”）"></textarea>
     <button type="button" class="btn secondary mic" id="distractorMic" aria-pressed="false" aria-label="用普通话输入干扰词">🎤 语音输入</button>
     <span class="speech-status" role="status" aria-live="polite"></span>
    </div>
-   <p class="hint small">可以每次说一个干扰词，重复点击麦克风会自动用“、”分隔。也能一次念出多个词，再检查和修改识别结果。未提供时，系统会从其他题目寻找候选词。</p>
+   <p class="hint small">这里只填<strong>其他备选词</strong>，如“高兴、安静、马虎”。正确词语会由系统自动加入词语库。可用 🎤 每次说一个词，也可以直接键入；语音识别后请检查。</p>
   </div>
   <div class="note">提示：也可以在句子中使用 <strong>/</strong> 指定短语边界，例如 <strong>小明 / 每天 / 认真地 / 完成作业。</strong>。教师输入的原句会作为唯一的自动评分依据。</div>
   <div class="toolbar">
@@ -204,7 +224,7 @@ function getRows(){return [...document.querySelectorAll('.sentence-row .sentence
 function addRow(value=''){
   const host=$('sentenceRows'),row=document.createElement('div');row.className='sentence-row';
   const number=document.createElement('label');number.className='number';
-  const field=document.createElement('input');field.className='sentence-input';field.type='text';field.placeholder='请输入正确的中文句子';field.value=value;field.maxLength=500;field.id='cloze-sentence-'+Math.random().toString(36).slice(2,10);number.htmlFor=field.id;
+  const field=document.createElement('input');field.className='sentence-input';field.type='text';field.placeholder='例如：小明每天认真地完成作业。（输入完整正确句子）';field.value=value;field.maxLength=500;field.id='cloze-sentence-'+Math.random().toString(36).slice(2,10);number.htmlFor=field.id;
   const mic=document.createElement('button');mic.type='button';mic.className='btn secondary mic';mic.textContent='🎤 语音输入';mic.setAttribute('aria-pressed','false');mic.onclick=()=>toggleMic(row,field,mic);
   const remove=document.createElement('button');remove.type='button';remove.className='btn danger remove';remove.textContent='删除';
   remove.onclick=()=>{if(activeRow===row)endMic(true);if(host.children.length<=1)field.value='';else row.remove();numberRows()};
@@ -443,6 +463,35 @@ async function importJson(file){
   }catch(error){setJsonStatus('导入失败：'+(error.message||'格式错误'),true)}
 }
 $('distractorMic').onclick=()=>toggleMic($('distractorRow'),$('distractors'),$('distractorMic'),'distractor');
+
+function loadSample(){
+  const example='小明每天认真地完成作业。';
+  const currentLines=getRows();
+  const hasExisting=currentLines.length>0||$('distractors').value.trim()!==''||
+    ($('activityTitle').value.trim()!==''&&$('activityTitle').value.trim()!=='选词填空');
+  if(hasExisting&&!confirm('载入示例会替换当前输入的句子、干扰词和挖空选择。确定继续吗？'))return;
+  if(activeRec){
+    endMic(true);
+    if(activeMic){
+      activeMic.classList.remove('on');
+      activeMic.textContent='🎤 语音输入';
+      activeMic.setAttribute('aria-pressed','false');
+    }
+    activeRec=null;activeMic=null;activeRow=null;
+  }
+  const q=createQuestion(example);
+  const target=q.parts.find(p=>p.text==='认真');
+  if(!target){alert('自动分词无法识别示例词语，请手动设置挖空。');return}
+  q.parts.forEach(p=>p.blank=p===target);
+  questions=[q];
+  $('sentenceRows').replaceChildren();
+  addRow(example);
+  $('distractors').value='高兴、安静、马虎';
+  $('activityTitle').value='选词填空';
+  setJsonStatus('示例已载入！点击“下一步：选择挖空”检查已选中的“认真”，然后生成学生练习。');
+}
+
+$('loadSample').onclick=loadSample;
 $('addSentence').onclick=()=>addRow();
 $('prepare').onclick=prepare;
 $('startBtn').onclick=start;
