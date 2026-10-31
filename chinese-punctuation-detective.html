@@ -191,7 +191,10 @@ function shuffle(a){
 }
 function makeBank(q){
   const needed=[...new Set(q.parts.filter(p=>p.kind==='punct'&&p.hide).map(p=>p.value))];
-  const decoys=shuffle(ALL_PUNC.filter(p=>!needed.includes(p))).slice(0,Math.max(3,5-needed.length));
+  const everyday=['，','。','？','！','、','：','；'];
+  const first=shuffle(everyday.filter(p=>!needed.includes(p)));
+  const other=shuffle(ALL_PUNC.filter(p=>!needed.includes(p)&&!everyday.includes(p)));
+  const decoys=[...first,...other].slice(0,Math.max(3,5-needed.length));
   return shuffle([...needed,...decoys]);
 }
 function setSection(id){
